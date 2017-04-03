@@ -567,21 +567,21 @@ function compareImages() {
 				});
 
 		}
-	}
-	else{
-		// Deactivate third panel
-		jQuery('#left').css({
-			'left': '0',
-			'width': 'calc(50% - 3px)'
-		});
-		jQuery('#mid').css({
-			'left': '50%',
-			'width': 'calc(50% - 3px)'
-		});
-		jQuery('#right').hide()
-		reset();
-		image3.j = null;
-		image3.dom = null;
+		else{
+			// Deactivate third panel
+			jQuery('#left').css({
+				'left': '0',
+				'width': 'calc(50% - 3px)'
+			});
+			jQuery('#mid').css({
+				'left': '50%',
+				'width': 'calc(50% - 3px)'
+			});
+			jQuery('#right').hide()
+			reset();
+			image3.j = null;
+			image3.dom = null;
+		}
 	}
 }
 
