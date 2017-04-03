@@ -442,7 +442,7 @@ function handleFile(div, image) {
 	div.find('.details').remove();
 	div.find('.main').remove();
 	div.find('.exif').remove();
-	div.find('.center').remove();
+	div.find('.center').html('Reading data...');
 	image3.dom = null;
 	image3.j = null;
 
@@ -481,7 +481,7 @@ function handleFile(div, image) {
 		image.dom = document.createElement('video');
 		image.dom.setAttribute('autoplay', play);
 		image.dom.setAttribute('loop', true);
-		image.dom.setAttribute('muted', true);
+		image.dom.muted = true;
 
 		// Activate play/pause button
 		jQuery('#play').show();
@@ -502,6 +502,7 @@ function handleFile(div, image) {
 					image.height = image.dom.height;
 					details.innerHTML = details.innerHTML + '<br>\
 						Dimension: ' + image.width + 'x' + image.height;
+					div.find('.center').remove();
 					image.zoom.show();
 					reset();
 					compareImages();
@@ -512,6 +513,7 @@ function handleFile(div, image) {
 					image.height = this.videoHeight;
 					details.innerHTML = details.innerHTML + '<br>\
 						Dimension: ' + image.width + 'x' + image.height;
+					div.find('.center').remove();
 					image.zoom.show();
 					reset();
 					compareImages();
@@ -522,6 +524,9 @@ function handleFile(div, image) {
 		};
 
 		fileReader.readAsDataURL(image.file);
+	}
+	else{
+		div.find('.center').html('Not a supported image or video file!');
 	}
 }
 
