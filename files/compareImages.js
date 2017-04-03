@@ -500,6 +500,8 @@ function handleFile(div, image) {
 				image.dom.onload = function () {
 					image.width = image.dom.width;
 					image.height = image.dom.height;
+					details.innerHTML = details.innerHTML + '<br>\
+						Dimension: ' + image.width + 'x' + image.height;
 					image.zoom.show();
 					reset();
 					compareImages();
@@ -508,6 +510,8 @@ function handleFile(div, image) {
 				image.dom.addEventListener("loadedmetadata", function (e) {
 					image.width = this.videoWidth,
 					image.height = this.videoHeight;
+					details.innerHTML = details.innerHTML + '<br>\
+						Dimension: ' + image.width + 'x' + image.height;
 					image.zoom.show();
 					reset();
 					compareImages();
@@ -523,8 +527,8 @@ function handleFile(div, image) {
 
 function compareImages() {
 	if ((image1.dom !== null) && (image2.dom !== null)) {
-		if ((image1.file.type === 'image/jpeg') || (image1.file.type === 'image/png') &&
-			(image2.file.type === 'image/jpeg') || (image2.file.type === 'image/png')) {
+		if (((image1.file.type === 'image/jpeg') || (image1.file.type === 'image/png')) &&
+			((image2.file.type === 'image/jpeg') || (image2.file.type === 'image/png'))) {
 
 			// Compare images with resemble
 			if (resembleConfig === null) {
