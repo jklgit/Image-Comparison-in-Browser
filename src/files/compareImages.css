@@ -1,0 +1,100 @@
+body{
+	font-family: Arial;
+	font-size: 0.8em;
+	color: white;
+	background-color: #222222;
+	padding: 0;
+	margin: 0;
+}
+#header{
+	margin-left: 5px;
+	height: 32px;
+	overflow: hidden;
+	padding: 4px;
+}
+#title{
+	font-size: 1.2em;
+}
+#content{
+	position: absolute;
+	top: 32px;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+	font-size: 0;
+}
+.block{
+	font-size: 12.8px;
+	margin: 0;
+	position: absolute;
+	width: calc(50% - 3px);
+	/* width: calc(100% / 3 - 3px); */
+	height: 100%;
+	border-right: 3px solid #222222;
+	background-color: #444444;
+	overflow: hidden;
+}
+.zoom{
+	position: absolute;
+	right: 0;
+	display: none;
+}
+.drag-over{
+	background-color: #666688;
+}
+
+.block > img,
+.block > video{
+	position: absolute;
+}
+
+#left{
+	
+}
+#mid{
+	left: 50%;
+	/* left: calc(100% / 3); */
+}
+#right{
+	display: none;
+	width: calc(100%/3 - 3px);
+	left: calc(2 * 100% / 3);
+}
+
+#play{
+	display:none;
+}
+
+.zoom{
+	z-index: 1;
+}
+
+.center {
+    position: absolute;
+    height: 50px;
+    width: 50%;
+    top: 50%;
+    left: 50%;
+    margin-left: -25%;
+    margin-top: -25px;
+    text-align: center;
+	font-size: 1.2em;
+}
+
+.details , .exif, #resemble{
+	position: absolute;
+    background-color: rgba(0,0,0,0.3);;
+    padding: 2px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.exif {
+    bottom: 0px;
+    font-size:0.8em;
+}
+
+#resemble{
+	bottom: 0px;
+	pointer-events: initial;
+}
