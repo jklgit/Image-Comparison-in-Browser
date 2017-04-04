@@ -1,16 +1,16 @@
 //(function (){
 
-// function main(){
-
 // Global variables
 var image1 = {
 	dom: null, // dom-object
 	j: null, // jQuery-object
-	width: 1e10, // orig-width (big number for taking smaller sizes in comparison, if not loaded, smaller number of loaded image will be taken)
-	height: 1e10, // orig-height
+	width: 1, // width of the image
+	height: 1, // width of the image
 	dataUrl: '', // base64 dataUrl
 	file: null, // dropped file
 	zoom: null, // Zoom button jQuery-object
+	src: '', // For drag and drop from another browser
+	type: '', // file type
 };
 var image2 = clone(image1);
 var image3 = clone(image1);
@@ -18,6 +18,8 @@ var resembleConfig = null;
 var play = true;
 var displayDetails = true;
 var displayExif = true;
+
+var temp;
 
 (function main() {
 	// Bind drag and drop
@@ -150,7 +152,7 @@ var displayExif = true;
 			}
 		};
 	});
-
+	
 	// Add mouselistener for zoom and pan
 	jQuery('#left')
 	.bind('mousewheel', zoom)
@@ -179,7 +181,7 @@ var displayExif = true;
 					'left': (image1.j.position().left + x) + 'px',
 				});
 			}
-			if (image1.j !== null) {
+			if (image2.j !== null) {
 				image2.j.css({
 					'top': image2.j.position().top + y + 'px',
 					'left': image2.j.position().left + x + 'px',
@@ -241,6 +243,58 @@ var displayExif = true;
 
 		return false;
 	};
+	
+	// Center element on resize
+	jQuery(window).bind('resize', onresize);
+	var old_width = getWidth();
+	var old_height = getHeight();
+	function onresize(event){
+		var width = getWidth();
+		var height = getHeight();
+		var delta_width = width - old_width;
+		var delta_height = height - old_height;
+		
+		var x = delta_width/4.0;
+		var y = delta_height/4.0;
+		if (image3.j !== null){
+			x = delta_width/6.0;
+			y = delta_height/6.0;
+		}
+		
+		if (image1.j !== null) {
+			image1.j.css({
+				'top': (image1.j.position().top + y) + 'px',
+				'left': (image1.j.position().left + x) + 'px',
+			});
+		}
+		if (image2.j !== null) {
+			image2.j.css({
+				'top': image2.j.position().top + y + 'px',
+				'left': image2.j.position().left + x + 'px',
+			});
+		}
+		if (image3.j !== null) {
+			image3.j.css({
+				'top': image3.j.position().top + y + 'px',
+				'left': image3.j.position().left + x + 'px',
+			});
+		}
+		
+		old_width = width;
+		old_height = height;
+	}
+	
+	// Get cross browser window width and height
+	function getWidth(){
+		return (window.innerWidth
+			|| document.documentElement.clientWidth
+			|| document.body.clientWidth);
+	}
+	function getHeight(){
+		return (window.innerHeight
+			|| document.documentElement.clientHeight
+			|| document.body.clientHeight);
+	}
 
 })();
 
@@ -255,41 +309,6 @@ function clone(obj) {
 	}
 	return copy;
 }
-
-// Add drag drop listener for blocks
-function dragDropDiv(div, image) {
-
-	div
-	.bind('dragover', function () {
-		div.addClass('drag-over');
-		return false;
-	})
-	.bind("dragend", function () {
-		div.removeClass('drag-over');
-		return false;
-	})
-	.bind("dragleave", function () {
-		div.removeClass('drag-over');
-		return false;
-	})
-	.bind("drop", function (event) {
-		var file = event.originalEvent.dataTransfer.files[0];
-
-		if (file) {
-
-			if (file.size > 100 * 1024 * 1024) {
-				div.find('.center').html('File too big! Drop another one.');
-			} else {
-				event.stopPropagation();
-				image.file = file;
-				handleFile(div, image);
-			}
-
-		}
-		div.removeClass('drag-over');
-		return false;
-	});
-};
 
 // Reset image scale and pos
 function reset() {
@@ -435,6 +454,147 @@ function updateZoomButton() {
 	}
 }
 
+// Add drag drop listener for blocks
+function dragDropDiv(div, image) {
+
+	div
+	.bind('dragover', function () {
+		div.addClass('drag-over');
+		return false;
+	})
+	.bind("dragend", function () {
+		div.removeClass('drag-over');
+		return false;
+	})
+	.bind("dragleave", function () {
+		div.removeClass('drag-over');
+		return false;
+	})
+	.bind("drop", function (event) {
+		var file = event.originalEvent.dataTransfer.files[0];
+		if (file) {
+			if (file.size > 100 * 1024 * 1024) {
+				div.find('.center').html('File too big! Drop another one.');
+			} else {
+				event.stopPropagation();
+				image.file = file;
+				handleFile(div, image);
+			}
+		}
+		else{
+			file = event.originalEvent.dataTransfer.getData('Text');
+			event.stopPropagation();
+			image.src = file;
+			handleText(div, image);
+		}
+		div.removeClass('drag-over');
+		return false;
+	});
+};
+
+// Handle dropped text
+function handleText(div, image){
+	
+	// Remove old stuff
+	div.find('.details').remove();
+	div.find('.main').remove();
+	div.find('.exif').remove();
+	div.find('.center').remove();
+	div.append(jQuery('<div class="center">Reading data from URL...</div>'));
+	div.append(jQuery('<div class="details"><div>'));
+	
+	// Create image
+	var img = new Image();
+	img.setAttribute('class', 'main');
+	img.onload = function () {
+		image.width = img.width;
+		image.height = img.height;
+		
+		div.find('.center').remove();
+		image.zoom.show();
+		reset();
+
+		// Add details: domain, filename and size
+		var details = div.find('.details');
+		var tokens = /^(https?:\/\/(([^\/\.]+\.)*[^\/\.]+\.[^\/\.]+)|file:\/\/)(\/.+\/|\/)([^\/\?]+)\??(.*)$/.exec(img.src);
+		var arguments = tokens[6] ? 'Arguments: ' + tokens[6] + '<br>' : '';
+		details.html('Domain: ' + tokens[2] + '<br>\
+		' + arguments + '\
+		Filename: '+ tokens[5] +'<br>\
+		Dimension: ' + image.width + 'x' + image.height);
+
+		// Get filetype from filename
+		tokens = /^.+\.([^\.]+)$/.exec(tokens[5]);
+		image.type = tokens[5];
+		
+		// Warning
+		div.append(jQuery('<div class="exif">Cannot read exif data or make pixel comparison, when dropped from browser.<br>Drop an already downloaded image from your HDD instead.</div>'));
+		
+		// Read dataURL
+		try{
+			//img.crossOrigin = "anonymous";
+			var context = document.createElement('canvas').getContext('2d');
+			context.canvas.width = image.width;
+			context.canvas.height = image.height;
+			context.drawImage(img, 0, 0, image.width, image.height);
+			image.dataUrl = context.canvas.toDataURL();
+		}
+		catch(err){
+			img.removeAttribute('crossOrigin');
+		}
+		
+		// If image from Sankakucomplex, get post details
+		var tokens = /^https:\/\/cs\.sankakucomplex\.com\/.+\.(.+)\?(\d+)$/.exec(img.src);
+		if(tokens){
+			var id = tokens[2];
+			var type = tokens[1];
+			var link = 'https://chan.sankakucomplex.com/post/show/' + id + ' #content';
+			
+			var div_temp = jQuery('<div />');
+			div_temp.load(link, function (resp, status) {
+				if (status !== 'error') {
+					// Load plays the video in background out of the variable cyberspace and you can do nothing about it?!
+					div_temp.find('video').remove();
+
+					// Load stats
+					var text = 'Post #' + id + '<br>'
+						 + clean(div_temp.find('#stats').text() + 'Filetype: ' + type);
+					details.html(text);
+				}
+				
+				// Make the messy details look pretty
+				function clean(text) {
+					// Trim every line, get rid of empty lines and join everything
+					var lines = text.split('\n');
+					var lines_new = [];
+					for (var i = 0; i < lines.length; i++) {
+						text = lines[i].trim();
+						if ((text !== '') && (text !== 'Details')) {
+							lines_new.push(text);
+						}
+					}
+					text = lines_new.join('<br>');
+					return text;
+				};
+			});
+		}
+		
+		// Read EXIF data and append to div if given
+		EXIF.getData(img, function () {
+			var text = EXIF.pretty(this).split('\n').join('<br>'); ;
+			if (text !== '') {
+				div.append(jQuery('<div class="exif">' + text + '</div>'));
+			}
+		});
+	};
+	img.src = image.src; //+ '?bustcache=' + new Date().getTime();
+
+	// Save dom object and append it
+	image.dom = img;
+	image.j = jQuery(img);
+	div.append(img);
+}
+
 // Handle dropped file
 function handleFile(div, image) {
 
@@ -442,7 +602,8 @@ function handleFile(div, image) {
 	div.find('.details').remove();
 	div.find('.main').remove();
 	div.find('.exif').remove();
-	div.find('.center').html('Reading data...');
+	div.find('.center').remove();
+	div.append(jQuery('<div class="center">Reading data...</div>'));
 	image3.dom = null;
 	image3.j = null;
 
@@ -530,6 +691,7 @@ function handleFile(div, image) {
 	}
 }
 
+// Compare images with resemble.js
 function compareImages() {
 	if ((image1.dom !== null) && (image2.dom !== null)) {
 		if (((image1.file.type === 'image/jpeg') || (image1.file.type === 'image/png')) &&
@@ -538,7 +700,7 @@ function compareImages() {
 			// Compare images with resemble
 			if (resembleConfig === null) {
 				resemble.outputSettings({
-					largeImageThreshold: 0,
+					largeImageThreshold: 1200,
 					transparency: 0.3
 				});
 			}
@@ -589,7 +751,5 @@ function compareImages() {
 		}
 	}
 }
-
-// };
 
 //})();
