@@ -6,7 +6,7 @@ Just drag and drop image or video files to compare. Files need to be smaller tha
 
 # Advanced Use
 
-You can drag and drop images directly from your browser as well. But it is not always possible to read exif and pixel data, because not all domains allow CORS policy. For example twitter.com allows reading out data from images.
+You can drag and drop images directly from your browser as well. But it is not always possible to read exif and pixel data, because not all domains allow CORS. For example twitter.com allows reading out data from images.
 
 It is also possible to use arguments in the link to directly load a URL after the page is loaded. For example https://jklgit.github.io/Image-Comparison-in-Browser/index.html?sid1=5981914 will load an image with the post id 5981914 from chan.sankakucomplex.com. Following arguments can be used:
 
