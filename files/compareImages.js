@@ -6,7 +6,7 @@ var image1 = {
 	j: null, // jQuery-object
 	width: 1, // width of the image
 	height: 1, // width of the image
-	dataUrl: '', // base64 dataUrl
+	dataUrl: null, // base64 dataUrl
 	file: null, // dropped file
 	zoom: null, // Zoom button jQuery-object
 	src: '', // For drag and drop from another browser
@@ -295,8 +295,34 @@ var temp;
 			|| document.documentElement.clientHeight
 			|| document.body.clientHeight);
 	}
-
+	
+	// After everything is ready handle current location arguments
+	handleArguments(parseUrl().args);
+	
 })();
+
+// Handle arguments
+function handleArguments(args){
+	var url;
+	if(args.sid1){
+		url = parseUrl('https://chan.sankakucomplex.com/post/show/' + args.sid1);
+	} else if(args.url1){
+		url = parseUrl(args.url1);
+	}
+	if(url){
+		handleUrl(url, jQuery('#left'), image1);
+	}
+	
+	url = undefined;
+	if(args.sid2){
+		url = parseUrl('https://chan.sankakucomplex.com/post/show/' + args.sid2);
+	} else if(args.url2){
+		url = parseUrl(args.url2);
+	}
+	if(url){
+		handleUrl(url, jQuery('#mid'), image2);
+	}
+}
 
 // Function to clone JS objects
 function clone(obj) {
@@ -478,22 +504,133 @@ function dragDropDiv(div, image) {
 			} else {
 				event.stopPropagation();
 				image.file = file;
+				image.type = file.type.split('/')[1];
 				handleFile(div, image);
 			}
 		}
 		else{
-			file = event.originalEvent.dataTransfer.getData('Text');
+			var url = parseUrl(event.originalEvent.dataTransfer.getData('Text'));
 			event.stopPropagation();
-			image.src = file;
-			handleText(div, image);
+			image.src = url.href;
+			handleUrl(url, div, image);
 		}
 		div.removeClass('drag-over');
 		return false;
 	});
 };
 
-// Handle dropped text
-function handleText(div, image){
+// Handle dropped URL
+function handleUrl(url, div, image){
+	/*
+	 * This needs CORS enabled and Referer allowed, or it will not work.
+	 */
+
+	// Find out which site the URL is from
+	var tokens = /^https:\/\/chan\.sankakucomplex\.com\/post\/show\/(\d+)$/.exec(url.href);
+	if(tokens){
+		
+		// Remove old content in div
+		div.find('.details').remove();
+		div.find('.main').remove();
+		div.find('.exif').remove();
+		div.find('.center').remove();
+		div.append(jQuery('<div class="center"></div>'));
+		div.find('.center').html('Loading post from Sankakucomplex...');
+		getSankakuPost(tokens[1], function(post){ // onComplete
+			image.type = post.type;
+			image.src = getAbsolutePath(post.src);
+			downloadImageFromUrl(url, div, image, post);
+		}, function(){ // onError
+			div.find('.center').html('Could not load post from Sankakucomplex.<br>\
+				Download the image/video and drop that instead.');
+		});
+	}
+	else{
+		tokens = /^https:\/\/cs\.sankakucomplex\.com\/.+\.(.+)\?(\d+)$/.exec(url.href);
+		if(tokens){
+			var post = {id: tokens[2]};
+			image.type = tokens[1];
+			downloadImageFromUrl(url, div, image, post);
+		}
+		else{
+			downloadImageFromUrl(url, div, image);
+		}
+	};
+	
+	function getAbsolutePath(link){
+		if(!link.startsWith('https:')){
+			link = 'https:' + link;
+		}
+		return link;
+	}
+}
+
+// Download Sankakucomplex post page
+function getSankakuPost(id, onComplete, onError) {
+	var link = 'https://chan.sankakucomplex.com/post/show/' + id + ' #content';
+
+	var div_temp = jQuery('<div />');
+	try{
+		div_temp.load(link, function (resp, status) {
+			if (status !== 'error') {
+				var post = {'id': id};
+				
+				// Load plays the video in background out of the variable cyberspace and you can do nothing about it?!
+				div_temp.find('video').remove();
+				
+				// Parse stats:
+				var a = div_temp.find('#highres');
+				post.src = a.attr('href');
+				post.bytes = a.attr('title');
+				var r = /Original: (\d+)x(\d+) \(.+\)/.exec(a.parent().text());
+				post.width = parseInt(r[1]);
+				post.height = parseInt(r[2]);
+				r = /.+\.(.+)\?\d+$/.exec(post.src);
+				post.type = r[1].toLowerCase();
+				
+				// Load stats
+				post.details = 'Post #' + post.id + '<br>'
+					 + clean(div_temp.find('#stats').text() + 'Filetype: ' + post.type);
+				
+				if(onComplete){
+					onComplete(post);
+				}
+			} else {
+				console.log(resp, status)
+				if(onError){
+					onError();
+				}
+			}
+
+			// Make the messy details look pretty
+			function clean(text) {
+				// Trim every line, get rid of empty lines and join everything
+				var lines = text.split('\n');
+				var lines_new = [];
+				for (var i = 0; i < lines.length; i++) {
+					text = lines[i].trim();
+					if ((text !== '') && (text !== 'Details')) {
+						lines_new.push(text);
+					}
+				}
+				text = lines_new.join('<br>');
+				return text;
+			};
+		});
+	} catch(err) {
+		console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', err);
+		if(onError){
+			onError();
+		}
+	}
+}
+
+// Download image if a URL has been dropped into the block
+function downloadImageFromUrl(url, div, image, post){
+	
+	if(!post){
+		post = {};
+	}
 	
 	// Remove old stuff
 	div.find('.details').remove();
@@ -501,98 +638,134 @@ function handleText(div, image){
 	div.find('.exif').remove();
 	div.find('.center').remove();
 	div.append(jQuery('<div class="center">Reading data from URL...</div>'));
-	div.append(jQuery('<div class="details"><div>'));
+	div.append('<div class="exif"></div>');
+	div.append('<div class="details"><div>');
+	image.dataUrl = null;
+	image3.dom = null;
+	image3.j = null;
+	
+	// If post details have been loaded before
+	if(post.details){
+		div.find('.details').html(post.details);
+	}
 	
 	// Create image
-	var img = new Image();
+	var img;
+	// If post before loaded aka thumbnail dropped, it could be a video
+	if(post.details){
+		switch(post.type){
+			case 'jpg':
+			case 'jpeg':
+			case 'png':
+			case 'gif':
+				img = new Image();
+				img.onload = onLoadFunction;
+				break;
+			case 'mp4':
+			case 'webm':
+				img = document.createElement('video');
+				img.addEventListener("loadedmetadata", onLoadFunction);
+				img.setAttribute('autoplay', play);
+				img.setAttribute('loop', true);
+				img.muted = true;
+
+				// Activate play/pause button
+				jQuery('#play').show();
+				break;
+		}
+	} else {
+		img = new Image();
+		img.onload = onLoadFunction;
+	}
 	img.setAttribute('class', 'main');
-	img.onload = function () {
-		image.width = img.width;
-		image.height = img.height;
-		
-		div.find('.center').remove();
-		image.zoom.show();
-		reset();
-
-		// Add details: domain, filename and size
-		var details = div.find('.details');
-		var tokens = /^(https?:\/\/(([^\/\.]+\.)*[^\/\.]+\.[^\/\.]+)|file:\/\/)(\/.+\/|\/)([^\/\?]+)\??(.*)$/.exec(img.src);
-		var arguments = tokens[6] ? 'Arguments: ' + tokens[6] + '<br>' : '';
-		details.html('Domain: ' + tokens[2] + '<br>\
-		' + arguments + '\
-		Filename: '+ tokens[5] +'<br>\
-		Dimension: ' + image.width + 'x' + image.height);
-
-		// Get filetype from filename
-		tokens = /^.+\.([^\.]+)$/.exec(tokens[5]);
-		image.type = tokens[5];
-		
-		// Warning
-		div.append(jQuery('<div class="exif">Cannot read exif data or make pixel comparison, when dropped from browser.<br>Drop an already downloaded image from your HDD instead.</div>'));
-		
-		// Read dataURL
-		try{
-			//img.crossOrigin = "anonymous";
-			var context = document.createElement('canvas').getContext('2d');
-			context.canvas.width = image.width;
-			context.canvas.height = image.height;
-			context.drawImage(img, 0, 0, image.width, image.height);
-			image.dataUrl = context.canvas.toDataURL();
-		}
-		catch(err){
-			img.removeAttribute('crossOrigin');
-		}
-		
-		// If image from Sankakucomplex, get post details
-		var tokens = /^https:\/\/cs\.sankakucomplex\.com\/.+\.(.+)\?(\d+)$/.exec(img.src);
-		if(tokens){
-			var id = tokens[2];
-			var type = tokens[1];
-			var link = 'https://chan.sankakucomplex.com/post/show/' + id + ' #content';
-			
-			var div_temp = jQuery('<div />');
-			div_temp.load(link, function (resp, status) {
-				if (status !== 'error') {
-					// Load plays the video in background out of the variable cyberspace and you can do nothing about it?!
-					div_temp.find('video').remove();
-
-					// Load stats
-					var text = 'Post #' + id + '<br>'
-						 + clean(div_temp.find('#stats').text() + 'Filetype: ' + type);
-					details.html(text);
-				}
-				
-				// Make the messy details look pretty
-				function clean(text) {
-					// Trim every line, get rid of empty lines and join everything
-					var lines = text.split('\n');
-					var lines_new = [];
-					for (var i = 0; i < lines.length; i++) {
-						text = lines[i].trim();
-						if ((text !== '') && (text !== 'Details')) {
-							lines_new.push(text);
-						}
-					}
-					text = lines_new.join('<br>');
-					return text;
-				};
-			});
-		}
-		
-		// Read EXIF data and append to div if given
-		EXIF.getData(img, function () {
-			var text = EXIF.pretty(this).split('\n').join('<br>'); ;
-			if (text !== '') {
-				div.append(jQuery('<div class="exif">' + text + '</div>'));
-			}
-		});
-	};
-	img.src = image.src; //+ '?bustcache=' + new Date().getTime();
+	img.src = image.src + '?bustcache=' + new Date().getTime();
 
 	// Save dom object and append it
 	image.dom = img;
 	image.j = jQuery(img);
 	div.append(img);
+	
+	function onLoadFunction(){
+		// Get image width and height on display
+		if(img.tagName === 'IMG'){
+			image.width = img.width;
+			image.height = img.height;
+		} else {
+			image.width = this.videoWidth;
+			image.height = this.videoHeight;
+		}
+		
+		// Reset image, show zoom button and remove center text
+		div.find('.center').remove();
+		image.zoom.show();
+		reset();
+
+		// Add details: domain, filename and size, if information has not been read before
+		if(!post.details){
+			var arguments = (url.search !== '') ? 'Arguments: ' + url.search + '<br>' : '';
+			div.find('.details').html('Domain: ' + url.host + '<br>\
+			' + arguments + '\
+			Filename: '+ url.file +'<br>\
+			Dimension: ' + image.width + 'x' + image.height);
+			
+			// Get type from URL
+			image.type = url.ext;
+		}
+		
+		/*
+		 * Following functions need CORS enabled, or it will not work.
+		 */
+		if(img.tagName === 'IMG'){
+		// Clone image in case of CORS error happens
+		var img_clone = img.cloneNode();
+		 
+		// Read dataURL
+		getDataUrl(img, image.width, image.height, function(dataUrl){ // onComplete
+			image.dataUrl = dataUrl;
+			compareImages();
+		}, function(){ // onError
+			// img disappears on CORS error (what?!) => replace with clone
+			image.j.remove();
+			div.append(img_clone);
+			image.dom = img_clone;
+			image.j = jQuery(image.dom);
+			div.find('.exif').html('Error:<br>\
+				Cannot read pixel/exif data and filesize form this domain.<br>\
+				Try downloading the file first before dropping here.');
+			
+			// Deactivate third block
+			displayRight(false);
+		});
+		
+		// Get filesize, if post not read before
+		if(!post.id){
+			getFilesize(img.src, function(filesize){
+				div.find('.details').html(div.find('.details').html() + '<br>Filesize: ' + filesize + ' Bytes');
+			});
+		}
+		
+		// If image is directlink from Sankakucomplex, get post details
+		if(post.id && !post.details){
+			getSankakuPost(post.id, function(post_new){
+				div.find('.details').html(post_new.details);
+			});
+		}
+		
+		// Read EXIF data and append to div if given
+		EXIF.getData(img, function () {
+			var text = EXIF.pretty(this).split('\n').join('<br>');
+			div.find('.exif').remove();
+			if (text !== '') {
+				div.append(jQuery('<div class="exif">' + text + '</div>'));
+			}
+			else{
+				div.find('.exif').remove();
+			}
+		});
+		} else {
+			displayRight(false);
+		}
+	}
 }
 
 // Handle dropped file
@@ -604,6 +777,7 @@ function handleFile(div, image) {
 	div.find('.exif').remove();
 	div.find('.center').remove();
 	div.append(jQuery('<div class="center">Reading data...</div>'));
+	image.dataUrl = null;
 	image3.dom = null;
 	image3.j = null;
 
@@ -657,16 +831,25 @@ function handleFile(div, image) {
 		var fileReader = new FileReader();
 
 		fileReader.onload = function (event) {
+			var alreadyOnload = false;
 			if (image.file.type.startsWith('image')) {
 				image.dom.onload = function () {
-					image.width = image.dom.width;
-					image.height = image.dom.height;
-					details.innerHTML = details.innerHTML + '<br>\
-						Dimension: ' + image.width + 'x' + image.height;
-					div.find('.center').remove();
-					image.zoom.show();
-					reset();
-					compareImages();
+					if(!alreadyOnload){
+						alreadyOnload = true;
+						image.width = image.dom.width;
+						image.height = image.dom.height;
+						console.log(image);
+						details.innerHTML = details.innerHTML + '<br>\
+							Dimension: ' + image.width + 'x' + image.height;
+						div.find('.center').remove();
+						image.zoom.show();
+						reset();
+						
+						getDataUrl(image.dom, image.width, image.height, function(dataUrl){
+							image.dataUrl = dataUrl;
+							compareImages();
+						});
+					}
 				};
 			} else {
 				image.dom.addEventListener("loadedmetadata", function (e) {
@@ -677,7 +860,7 @@ function handleFile(div, image) {
 					div.find('.center').remove();
 					image.zoom.show();
 					reset();
-					compareImages();
+					displayRight(false);
 				}, false);
 			}
 			div.append(image.dom);
@@ -693,63 +876,227 @@ function handleFile(div, image) {
 
 // Compare images with resemble.js
 function compareImages() {
-	if ((image1.dom !== null) && (image2.dom !== null)) {
-		if (((image1.file.type === 'image/jpeg') || (image1.file.type === 'image/png')) &&
-			((image2.file.type === 'image/jpeg') || (image2.file.type === 'image/png'))) {
+	if ((image1.dataUrl !== null) && (image2.dataUrl !== null)) {
 
-			// Compare images with resemble
-			if (resembleConfig === null) {
-				resemble.outputSettings({
-					largeImageThreshold: 1200,
-					transparency: 0.3
-				});
-			}
-
-			resembleConfig = resemble(image1.file).compareTo(image2.file).onComplete(function (data) {
-					// Image 3 Loaded
-					image3.dom = document.querySelector('#right > .main');
-					image3.j = jQuery(image3.dom).attr('src', data.getImageDataUrl());
-					image3.width = image1.width;
-					image3.height = image1.height;
-					jQuery('#right > .details').html('Mismatch: ' + data.misMatchPercentage + ' %');
-					jQuery('input[name="resemble-method"], input[name="resemble-color"]').each(function () {
-						this.disabled = false;
-					});
-
-					// Activate third panel
-					if (jQuery('#right').is(':visible')) {
-						reset3();
-					} else {
-						jQuery('#left').css({
-							'left': '0',
-							'width': 'calc(100%/3 - 3px)'
-						});
-						jQuery('#mid').css({
-							'left': 'calc(100%/3)',
-							'width': 'calc(100%/3 - 3px)'
-						});
-						jQuery('#right').show()
-						reset();
-					}
-				});
-
+		// Compare images with resemble
+		if (resembleConfig === null) {
+			resemble.outputSettings({
+				largeImageThreshold: 1200,
+				transparency: 0.3
+			});
 		}
-		else{
-			// Deactivate third panel
+
+		resembleConfig = resemble(image1.dataUrl).compareTo(image2.dataUrl).onComplete(function (data) {
+				// Image 3 Loaded
+				image3.dom = document.querySelector('#right > .main');
+				image3.j = jQuery(image3.dom).attr('src', data.getImageDataUrl());
+				image3.width = image1.width;
+				image3.height = image1.height;
+				jQuery('#right > .details').html('Mismatch: ' + data.misMatchPercentage + ' %');
+				jQuery('input[name="resemble-method"], input[name="resemble-color"]').each(function () {
+					this.disabled = false;
+				});
+
+				displayRight(true);
+			});
+
+	}
+	else{
+		displayRight(false);
+	}
+}
+
+// Toggle third block with this
+function displayRight(b) {
+	if (b === undefined) {
+		b = true;
+	}
+	if (b) {
+		// Activate third panel
+		if (jQuery('#right').is(':visible')) {
+			reset3();
+		} else {
 			jQuery('#left').css({
 				'left': '0',
-				'width': 'calc(50% - 3px)'
+				'width': 'calc(100%/3 - 3px)'
 			});
 			jQuery('#mid').css({
-				'left': '50%',
-				'width': 'calc(50% - 3px)'
+				'left': 'calc(100%/3)',
+				'width': 'calc(100%/3 - 3px)'
 			});
-			jQuery('#right').hide()
+			jQuery('#right').show()
 			reset();
-			image3.j = null;
-			image3.dom = null;
+		}
+	} else {
+		// Deactivate third panel
+		jQuery('#left').css({
+			'left': '0',
+			'width': 'calc(50% - 3px)'
+		});
+		jQuery('#mid').css({
+			'left': '50%',
+			'width': 'calc(50% - 3px)'
+		});
+		jQuery('#right').hide()
+		reset();
+		image3.j = null;
+		image3.dom = null;
+	}
+}
+
+// Get resized dataURL and run onComplete(dataURL) when finished for an img element
+function getDataUrl(img, w, h, onComplete, onError){
+	var MAX_WH = 1200; // Max width/height
+	// If portrait
+	if(h > w){
+		// Max height
+		w = w/h*MAX_WH;
+		h = MAX_WH;
+	}
+	else{
+		// Max width
+		h = h/w*MAX_WH;
+		w = MAX_WH;
+	}
+	img.crossOrigin = "anonymous";
+	var context = document.createElement('canvas').getContext('2d');
+	context.canvas.width = w;
+	context.canvas.height = h;
+	context.drawImage(img, 0, 0, w, h);
+	var dataURL;
+	try{
+		dataURL = context.canvas.toDataURL();
+		if(onComplete){
+			onComplete(dataURL);
+		}
+	}catch(err){
+		console.log(err);
+		if(onError){
+			onError();
 		}
 	}
+	return dataURL;
+}
+
+// Get filesize from source and run onComplete(filesize), when done
+function getFilesize(src, onComplete){
+	var xhr = new XMLHttpRequest();
+	var filesize;
+	xhr.open('HEAD', src, true);
+	xhr.onreadystatechange = function(){
+	  if ( xhr.readyState == 4 ) {
+		if ( (xhr.status == 200) || (xhr.status == 304) ) {
+			filesize = xhr.getResponseHeader('Content-Length');
+			// If "Access-Control-Expose-Headers", "Content-Length" is given
+			if(filesize !== null){
+				onComplete(filesize);
+			}
+			else{
+				console.log('Error reading filesize: Access-Control-Expose-Headers:"Content-Length" is missing in response header.');
+			}
+		} else {
+		  console.log('Error reading filesize.');
+		}
+	  }
+	};
+	xhr.send(null);
+}
+
+// Parse URL
+function parseUrl(link){
+	
+	if(link === undefined){
+		link = document.location.href;
+	}
+	
+	var url = {};
+	url.href = link;
+	
+	// Split link into link and hash part
+	var n = link.indexOf('#');
+	if(n > -1){
+		url.hash = link.substr(n + 1);
+		url.hrefNoHash = link.substr(0, n);
+		link = url.hrefNoHash;
+	} else {
+		url.hash = '';
+		url.hrefNoHash = link;
+	}
+	
+	// Split link into link and search part
+	n = link.indexOf('?');
+	if(n > -1){
+		url.search = link.substr(n + 1);
+		url.hrefNoSearch = link.substr(0, n);
+	} else {
+		url.search = '';
+		url.hrefNoSearch = link;
+	}
+	
+	// Get all parts of the link
+	// Regexp coarse: ((protocol://host:port)|file://)(path)(name.ext)
+	var regexp = /^((([^\/\.]+):\/\/)?(([^\/\.]+\.)*[^\/\.]+\.[^\/\.:]+(:\d+)?)|(file):\/\/)(\/.+\/|\/)?([^\/]+)?$/;
+	var tokens = regexp.exec(url.hrefNoSearch);
+	// url.regexp = regexp; // Save to check
+	// url.tokens = tokens;
+	/* Tokens:
+	 * 0: match
+	 * 1: link without /path/name.ext, if file, then file://
+	 * 2: https:// or ftp:// or undefined if not given
+	 * 3: http, https or ftp, if 2 http or https,e else undefined
+	 * 4: hostname + subdomain if 2 http, https or undefined
+	 * 5: undefined
+	 * 6: port
+	 * 7: file, if 2 file://
+	 * 8: /path/
+	 * 9: name.ext
+	 */
+	if(tokens){
+		// If not a file, then get hostname
+		if(tokens[1] !== 'file://'){
+			url.protocol = tokens[3];
+			url.hostname = tokens[4];
+			url.port = (tokens[6]) ? tokens[6].substr(1) : undefined;
+			url.host = (url.port) ? url.hostname + ':' + url.port : url.hostname;
+			url.path = tokens[8];
+		}
+		else{
+			url.protocol = 'file';
+			url.hostname = 'localhost';
+			url.path = tokens[8].substr(1);
+		}
+		url.file = tokens[9];
+		url.pathname = (url.file) ? url.path + url.file : url.path;
+	}
+	
+	// Parse filename
+	if(url.file){
+		n = url.file.lastIndexOf('.');
+		if(n > -1){
+			url.name = url.file.substr(0, n);
+			url.ext = url.file.substr(n + 1);
+		} else {
+			url.name = url.file;
+			url.ext = '';
+		}
+	}
+	
+	// Parse arguments
+	url.args = {};
+	if(url.search !== ''){
+		var array = url.search.split('&');
+		for(var i = 0; i < array.length; i++){
+			n = array[i].indexOf('=');
+			if(n > -1){
+				url.args[decodeURIComponent(array[i].substr(0, n))] =
+					decodeURIComponent(array[i].substr(n+1));
+			} else {
+				url.args[decodeURIComponent(array[i])] = undefined;
+			}
+		}
+	}
+	
+	return url;
 }
 
 //})();
