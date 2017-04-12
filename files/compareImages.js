@@ -1,4 +1,4 @@
-//(function (){
+//(function () {
 
 // Global variables
 var image1 = {
@@ -108,7 +108,7 @@ var temp;
 	jQuery('input[name="resemble-method"], input[name="resemble-color"]')
 	.each(function (i) {
 		// Reset to "nothing" and "flat"
-		if((i === 0) || (i === 3)){
+		if ((i === 0) || (i === 3)) {
 			this.checked = true;
 		}
 		this.disabled = true;
@@ -152,7 +152,7 @@ var temp;
 			}
 		};
 	});
-	
+
 	// Add mouselistener for zoom and pan
 	jQuery('#left')
 	.bind('mousewheel', zoom)
@@ -243,24 +243,24 @@ var temp;
 
 		return false;
 	};
-	
+
 	// Center element on resize
 	jQuery(window).bind('resize', onresize);
 	var old_width = getWidth();
 	var old_height = getHeight();
-	function onresize(event){
+	function onresize(event) {
 		var width = getWidth();
 		var height = getHeight();
 		var delta_width = width - old_width;
 		var delta_height = height - old_height;
-		
-		var x = delta_width/4.0;
-		var y = delta_height/4.0;
-		if (image3.j !== null){
-			x = delta_width/6.0;
-			y = delta_height/6.0;
+
+		var x = delta_width / 4.0;
+		var y = delta_height / 4.0;
+		if (image3.j !== null) {
+			x = delta_width / 6.0;
+			y = delta_height / 6.0;
 		}
-		
+
 		if (image1.j !== null) {
 			image1.j.css({
 				'top': (image1.j.position().top + y) + 'px',
@@ -279,47 +279,47 @@ var temp;
 				'left': image3.j.position().left + x + 'px',
 			});
 		}
-		
+
 		old_width = width;
 		old_height = height;
 	}
-	
+
 	// Get cross browser window width and height
-	function getWidth(){
+	function getWidth() {
 		return (window.innerWidth
-			|| document.documentElement.clientWidth
-			|| document.body.clientWidth);
+			 || document.documentElement.clientWidth
+			 || document.body.clientWidth);
 	}
-	function getHeight(){
+	function getHeight() {
 		return (window.innerHeight
-			|| document.documentElement.clientHeight
-			|| document.body.clientHeight);
+			 || document.documentElement.clientHeight
+			 || document.body.clientHeight);
 	}
-	
+
 	// After everything is ready handle current location arguments
 	handleArguments(parseUrl().args);
-	
+
 })();
 
 // Handle arguments
-function handleArguments(args){
+function handleArguments(args) {
 	var url;
-	if(args.sid1){
+	if (args.sid1) {
 		url = parseUrl('https://chan.sankakucomplex.com/post/show/' + args.sid1);
-	} else if(args.url1){
+	} else if (args.url1) {
 		url = parseUrl(args.url1);
 	}
-	if(url){
+	if (url) {
 		handleUrl(url, jQuery('#left'), image1);
 	}
-	
+
 	url = undefined;
-	if(args.sid2){
+	if (args.sid2) {
 		url = parseUrl('https://chan.sankakucomplex.com/post/show/' + args.sid2);
-	} else if(args.url2){
+	} else if (args.url2) {
 		url = parseUrl(args.url2);
 	}
-	if(url){
+	if (url) {
 		handleUrl(url, jQuery('#mid'), image2);
 	}
 }
@@ -507,8 +507,7 @@ function dragDropDiv(div, image) {
 				image.type = file.type.split('/')[1];
 				handleFile(div, image);
 			}
-		}
-		else{
+		} else {
 			var url = parseUrl(event.originalEvent.dataTransfer.getData('Text'));
 			event.stopPropagation();
 			image.src = url.href;
@@ -520,15 +519,15 @@ function dragDropDiv(div, image) {
 };
 
 // Handle dropped URL
-function handleUrl(url, div, image){
+function handleUrl(url, div, image) {
 	/*
 	 * This needs CORS enabled and Referer allowed, or it will not work.
 	 */
 
 	// Find out which site the URL is from
 	var tokens = /^https:\/\/chan\.sankakucomplex\.com\/post\/show\/(\d+)$/.exec(url.href);
-	if(tokens){
-		
+	if (tokens) {
+
 		// Remove old content in div
 		div.find('.details').remove();
 		div.find('.main').remove();
@@ -536,31 +535,31 @@ function handleUrl(url, div, image){
 		div.find('.center').remove();
 		div.append(jQuery('<div class="center"></div>'));
 		div.find('.center').html('Loading post from Sankakucomplex...');
-		getSankakuPost(tokens[1], function(post){ // onComplete
+		getSankakuPost(tokens[1], function (post) { // onComplete
 			image.type = post.type;
 			image.src = getAbsolutePath(post.src);
 			downloadImageFromUrl(url, div, image, post);
-		}, function(){ // onError
+		}, function () { // onError
 			div.find('.center').html('Could not load post from Sankakucomplex.<br>\
 				Download the image/video and drop that instead.');
 		});
-	}
-	else{
+	} else {
 		tokens = /^https:\/\/cs\.sankakucomplex\.com\/.+\.(.+)\?(\d+)$/.exec(url.href);
-		if(tokens){
-			var post = {id: tokens[2]};
+		if (tokens) {
+			var post = {
+				id: tokens[2]
+			};
 			image.type = tokens[1];
 			image.src = url.href;
 			downloadImageFromUrl(url, div, image, post);
-		}
-		else{
+		} else {
 			image.src = url.href;
 			downloadImageFromUrl(url, div, image);
 		}
 	};
-	
-	function getAbsolutePath(link){
-		if(!link.startsWith('https:')){
+
+	function getAbsolutePath(link) {
+		if (!link.startsWith('https:')) {
 			link = 'https:' + link;
 		}
 		return link;
@@ -572,14 +571,16 @@ function getSankakuPost(id, onComplete, onError) {
 	var link = 'https://chan.sankakucomplex.com/post/show/' + id + ' #content';
 
 	var div_temp = jQuery('<div />');
-	try{
+	try {
 		div_temp.load(link, function (resp, status) {
 			if (status !== 'error') {
-				var post = {'id': id};
-				
+				var post = {
+					'id': id
+				};
+
 				// Load plays the video in background out of the variable cyberspace and you can do nothing about it?!
 				div_temp.find('video').remove();
-				
+
 				// Parse stats:
 				var a = div_temp.find('#highres');
 				post.src = a.attr('href');
@@ -589,17 +590,19 @@ function getSankakuPost(id, onComplete, onError) {
 				post.height = parseInt(r[2]);
 				r = /.+\.(.+)\?\d+$/.exec(post.src);
 				post.type = r[1].toLowerCase();
-				
+
 				// Load stats
-				post.details = 'Post #' + post.id + '<br>'
-					 + clean(div_temp.find('#stats').text() + 'Filetype: ' + post.type);
-				
-				if(onComplete){
+				post.details = 'Post #' + post.id + '<br>' +
+					clean(div_temp.find('#stats').text() +
+						'Filetype: ' + post.type + '<br>' +
+						'Filesize: ' + post.bytes + ' Bytes');
+
+				if (onComplete) {
 					onComplete(post);
 				}
 			} else {
 				console.log(resp, status)
-				if(onError){
+				if (onError) {
 					onError();
 				}
 			}
@@ -619,21 +622,21 @@ function getSankakuPost(id, onComplete, onError) {
 				return text;
 			};
 		});
-	} catch(err) {
+	} catch (err) {
 		console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', err);
-		if(onError){
+		if (onError) {
 			onError();
 		}
 	}
 }
 
 // Download image if a URL has been dropped into the block
-function downloadImageFromUrl(url, div, image, post){
-	
-	if(!post){
+function downloadImageFromUrl(url, div, image, post) {
+
+	if (!post) {
 		post = {};
 	}
-	
+
 	// Remove old stuff
 	div.find('.details').remove();
 	div.find('.main').remove();
@@ -645,125 +648,122 @@ function downloadImageFromUrl(url, div, image, post){
 	image.dataUrl = null;
 	image3.dom = null;
 	image3.j = null;
-	
+
 	// If post details have been loaded before
-	if(post.details){
+	if (post.details) {
 		div.find('.details').html(post.details);
 	}
-	
+
 	// Create image
 	var img;
 	// If post before loaded aka thumbnail dropped, it could be a video
-	if(post.details){
-		switch(post.type){
-			case 'jpg':
-			case 'jpeg':
-			case 'png':
-			case 'gif':
-				img = new Image();
-				img.onload = onLoadFunction;
-				break;
-			case 'mp4':
-			case 'webm':
-				img = document.createElement('video');
-				img.addEventListener("loadedmetadata", onLoadFunction);
-				img.setAttribute('autoplay', play);
-				img.setAttribute('loop', true);
-				img.muted = true;
+	if (post.details) {
+		switch (post.type) {
+		case 'jpg':
+		case 'jpeg':
+		case 'png':
+		case 'gif':
+			img = new Image();
+			img.onload = onLoadFunction;
+			break;
+		case 'mp4':
+		case 'webm':
+			img = document.createElement('video');
+			img.addEventListener("loadedmetadata", onLoadFunction);
+			img.setAttribute('autoplay', play);
+			img.setAttribute('loop', true);
+			img.muted = true;
 
-				// Activate play/pause button
-				jQuery('#play').show();
-				break;
+			// Activate play/pause button
+			jQuery('#play').show();
+			break;
 		}
 	} else {
 		img = new Image();
 		img.onload = onLoadFunction;
 	}
 	img.setAttribute('class', 'main');
-	img.src = image.src + '?bustcache=' + new Date().getTime();
+	img.src = image.src; //+ '?bustcache=' + new Date().getTime();
 
 	// Save dom object and append it
 	image.dom = img;
 	image.j = jQuery(img);
 	div.append(img);
-	
-	function onLoadFunction(){
+
+	function onLoadFunction() {
 		// Get image width and height on display
-		if(img.tagName === 'IMG'){
+		if (img.tagName === 'IMG') {
 			image.width = img.width;
 			image.height = img.height;
 		} else {
 			image.width = this.videoWidth;
 			image.height = this.videoHeight;
 		}
-		
+
 		// Reset image, show zoom button and remove center text
 		div.find('.center').remove();
 		image.zoom.show();
 		reset();
 
 		// Add details: domain, filename and size, if information has not been read before
-		if(!post.details){
+		if (!post.details) {
 			var arguments = (url.search !== '') ? 'Arguments: ' + url.search + '<br>' : '';
 			div.find('.details').html('Domain: ' + url.host + '<br>\
-			' + arguments + '\
-			Filename: '+ url.file +'<br>\
-			Dimension: ' + image.width + 'x' + image.height);
-			
+				' + arguments + '\
+				Filename: ' + url.file + '<br>\
+				Dimension: ' + image.width + 'x' + image.height);
+
 			// Get type from URL
 			image.type = url.ext;
 		}
-		
+
 		/*
 		 * Following functions need CORS enabled, or it will not work.
 		 */
-		if(img.tagName === 'IMG'){
-		// Clone image in case of CORS error happens
-		var img_clone = img.cloneNode();
-		 
-		// Read dataURL
-		getDataUrl(img, image.width, image.height, function(dataUrl){ // onComplete
-			image.dataUrl = dataUrl;
-			compareImages();
-		}, function(){ // onError
-			// img disappears on CORS error (what?!) => replace with clone
-			image.j.remove();
-			div.append(img_clone);
-			image.dom = img_clone;
-			image.j = jQuery(image.dom);
-			div.find('.exif').html('Error:<br>\
-				Cannot read pixel/exif data and filesize form this domain.<br>\
-				Try downloading the file first before dropping here.');
-			
-			// Deactivate third block
-			displayRight(false);
-		});
-		
-		// Get filesize, if post not read before
-		if(!post.id){
-			getFilesize(img.src, function(filesize){
-				div.find('.details').html(div.find('.details').html() + '<br>Filesize: ' + filesize + ' Bytes');
+		if (img.tagName === 'IMG') {
+			// Clone image in case of CORS error happens
+			var img_clone = img.cloneNode();
+
+			// Read dataURL
+			getDataUrl(img, image.width, image.height, function (dataUrl) { // onComplete
+				image.dataUrl = dataUrl;
+				compareImages();
+			}, function () { // onError
+				// img disappears on CORS error (what?!) => replace with clone
+				image.j.remove();
+				div.append(img_clone);
+				image.dom = img_clone;
+				image.j = jQuery(image.dom);
+
+				// Deactivate third block
+				displayRight(false);
 			});
-		}
-		
-		// If image is directlink from Sankakucomplex, get post details
-		if(post.id && !post.details){
-			getSankakuPost(post.id, function(post_new){
-				div.find('.details').html(post_new.details);
-			});
-		}
-		
-		// Read EXIF data and append to div if given
-		EXIF.getData(img, function () {
-			var text = EXIF.pretty(this).split('\n').join('<br>');
-			div.find('.exif').remove();
-			if (text !== '') {
-				div.append(jQuery('<div class="exif">' + text + '</div>'));
+
+			// Get filesize, if post not read before
+			if (!post.id) {
+				getFilesize(img.src, function (filesize) {
+					div.find('.details').html(div.find('.details').html() + '<br>Filesize: ' + filesize + ' Bytes');
+				});
 			}
-			else{
+
+			// If image is directlink from Sankakucomplex, get post details
+			if (post.id && !post.details) {
+				getSankakuPost(post.id, function (post_new) {
+					div.find('.details').html(post_new.details);
+				});
+			}
+
+			// Read EXIF data and append to div if given
+			EXIF.getData(img, function () {
+				var text = EXIF.pretty(this).split('\n').join('<br>');
 				div.find('.exif').remove();
-			}
-		});
+				if (text !== '') {
+					div.append(jQuery('<div class="exif">' + text + '</div>'));
+				} else {
+					div.find('.exif').remove();
+				}
+			});
+
 		} else {
 			displayRight(false);
 		}
@@ -836,7 +836,7 @@ function handleFile(div, image) {
 			var alreadyOnload = false;
 			if (image.file.type.startsWith('image')) {
 				image.dom.onload = function () {
-					if(!alreadyOnload){
+					if (!alreadyOnload) {
 						alreadyOnload = true;
 						image.width = image.dom.width;
 						image.height = image.dom.height;
@@ -846,8 +846,8 @@ function handleFile(div, image) {
 						div.find('.center').remove();
 						image.zoom.show();
 						reset();
-						
-						getDataUrl(image.dom, image.width, image.height, function(dataUrl){
+
+						getDataUrl(image.dom, image.width, image.height, function (dataUrl) {
 							image.dataUrl = dataUrl;
 							compareImages();
 						});
@@ -870,8 +870,7 @@ function handleFile(div, image) {
 		};
 
 		fileReader.readAsDataURL(image.file);
-	}
-	else{
+	} else {
 		div.find('.center').html('Not a supported image or video file!');
 	}
 }
@@ -902,8 +901,7 @@ function compareImages() {
 				displayRight(true);
 			});
 
-	}
-	else{
+	} else {
 		displayRight(false);
 	}
 }
@@ -947,17 +945,16 @@ function displayRight(b) {
 }
 
 // Get resized dataURL and run onComplete(dataURL) when finished for an img element
-function getDataUrl(img, w, h, onComplete, onError){
+function getDataUrl(img, w, h, onComplete, onError) {
 	var MAX_WH = 1200; // Max width/height
 	// If portrait
-	if(h > w){
+	if (h > w) {
 		// Max height
-		w = w/h*MAX_WH;
+		w = w / h * MAX_WH;
 		h = MAX_WH;
-	}
-	else{
+	} else {
 		// Max width
-		h = h/w*MAX_WH;
+		h = h / w * MAX_WH;
 		w = MAX_WH;
 	}
 	img.crossOrigin = "anonymous";
@@ -966,14 +963,14 @@ function getDataUrl(img, w, h, onComplete, onError){
 	context.canvas.height = h;
 	context.drawImage(img, 0, 0, w, h);
 	var dataURL;
-	try{
+	try {
 		dataURL = context.canvas.toDataURL();
-		if(onComplete){
+		if (onComplete) {
 			onComplete(dataURL);
 		}
-	}catch(err){
+	} catch (err) {
 		console.log(err);
-		if(onError){
+		if (onError) {
 			onError();
 		}
 	}
@@ -981,42 +978,41 @@ function getDataUrl(img, w, h, onComplete, onError){
 }
 
 // Get filesize from source and run onComplete(filesize), when done
-function getFilesize(src, onComplete){
+function getFilesize(src, onComplete) {
 	var xhr = new XMLHttpRequest();
 	var filesize;
 	xhr.open('HEAD', src, true);
-	xhr.onreadystatechange = function(){
-	  if ( xhr.readyState == 4 ) {
-		if ( (xhr.status == 200) || (xhr.status == 304) ) {
-			filesize = xhr.getResponseHeader('Content-Length');
-			// If "Access-Control-Expose-Headers", "Content-Length" is given
-			if(filesize !== null){
-				onComplete(filesize);
+	xhr.onreadystatechange = function () {
+		if (xhr.readyState == 4) {
+			if ((xhr.status == 200) || (xhr.status == 304)) {
+				filesize = xhr.getResponseHeader('Content-Length');
+				// If "Access-Control-Expose-Headers", "Content-Length" is given
+				if (filesize !== null) {
+					onComplete(filesize);
+				} else {
+					console.log('Error reading filesize: Access-Control-Expose-Headers:"Content-Length" is missing in response header.');
+				}
+			} else {
+				console.log('Error reading filesize.');
 			}
-			else{
-				console.log('Error reading filesize: Access-Control-Expose-Headers:"Content-Length" is missing in response header.');
-			}
-		} else {
-		  console.log('Error reading filesize.');
 		}
-	  }
 	};
 	xhr.send(null);
 }
 
 // Parse URL
-function parseUrl(link){
-	
-	if(link === undefined){
+function parseUrl(link) {
+
+	if (link === undefined) {
 		link = document.location.href;
 	}
-	
+
 	var url = {};
 	url.href = link;
-	
+
 	// Split link into link and hash part
 	var n = link.indexOf('#');
-	if(n > -1){
+	if (n > -1) {
 		url.hash = link.substr(n + 1);
 		url.hrefNoHash = link.substr(0, n);
 		link = url.hrefNoHash;
@@ -1024,17 +1020,17 @@ function parseUrl(link){
 		url.hash = '';
 		url.hrefNoHash = link;
 	}
-	
+
 	// Split link into link and search part
 	n = link.indexOf('?');
-	if(n > -1){
+	if (n > -1) {
 		url.search = link.substr(n + 1);
 		url.hrefNoSearch = link.substr(0, n);
 	} else {
 		url.search = '';
 		url.hrefNoSearch = link;
 	}
-	
+
 	// Get all parts of the link
 	// Regexp coarse: ((protocol://host:port)|file://)(path)(name.ext)
 	var regexp = /^((([^\/\.]+):\/\/)?(([^\/\.]+\.)*[^\/\.]+\.[^\/\.:]+(:\d+)?)|(file):\/\/)(\/.+\/|\/)?([^\/]+)?$/;
@@ -1053,16 +1049,15 @@ function parseUrl(link){
 	 * 8: /path/
 	 * 9: name.ext
 	 */
-	if(tokens){
+	if (tokens) {
 		// If not a file, then get hostname
-		if(tokens[1] !== 'file://'){
+		if (tokens[1] !== 'file://') {
 			url.protocol = tokens[3];
 			url.hostname = tokens[4];
 			url.port = (tokens[6]) ? tokens[6].substr(1) : undefined;
 			url.host = (url.port) ? url.hostname + ':' + url.port : url.hostname;
 			url.path = tokens[8];
-		}
-		else{
+		} else {
 			url.protocol = 'file';
 			url.hostname = 'localhost';
 			url.path = tokens[8].substr(1);
@@ -1070,11 +1065,11 @@ function parseUrl(link){
 		url.file = tokens[9];
 		url.pathname = (url.file) ? url.path + url.file : url.path;
 	}
-	
+
 	// Parse filename
-	if(url.file){
+	if (url.file) {
 		n = url.file.lastIndexOf('.');
-		if(n > -1){
+		if (n > -1) {
 			url.name = url.file.substr(0, n);
 			url.ext = url.file.substr(n + 1);
 		} else {
@@ -1082,22 +1077,22 @@ function parseUrl(link){
 			url.ext = '';
 		}
 	}
-	
+
 	// Parse arguments
 	url.args = {};
-	if(url.search !== ''){
+	if (url.search !== '') {
 		var array = url.search.split('&');
-		for(var i = 0; i < array.length; i++){
+		for (var i = 0; i < array.length; i++) {
 			n = array[i].indexOf('=');
-			if(n > -1){
+			if (n > -1) {
 				url.args[decodeURIComponent(array[i].substr(0, n))] =
-					decodeURIComponent(array[i].substr(n+1));
+					decodeURIComponent(array[i].substr(n + 1));
 			} else {
 				url.args[decodeURIComponent(array[i])] = undefined;
 			}
 		}
 	}
-	
+
 	return url;
 }
 
