@@ -550,9 +550,11 @@ function handleUrl(url, div, image){
 		if(tokens){
 			var post = {id: tokens[2]};
 			image.type = tokens[1];
+			image.src = url.href;
 			downloadImageFromUrl(url, div, image, post);
 		}
 		else{
+			image.src = url.href;
 			downloadImageFromUrl(url, div, image);
 		}
 	};
