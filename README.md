@@ -15,9 +15,9 @@ It is also possible to use arguments in the link to directly load a URL after th
 * sid1: Post id from chan.sankakucomplex.com for the left panel.
 * sid2: Post id from chan.sankakucomplex.com for the right panel.
 
-# What is needed for full drag and drop support from another browser?
+# Presettings for drag&drop support from another browser?
 
-Following parameters need to be allowed for jklgit.github.io:
+Following parameters need to be allowed for jklgit.github.io on the server side:
 
 * "Access-Control-Allow-Origin" needs to be allowed in the http response header (for reading out exif/pixel data).
 * "Access-Control-Expose-Headers" needs to have "Content-Length" in the http response header (for reading out filesize).
