@@ -15,6 +15,10 @@ It is also possible to use arguments in the link to directly load a URL after th
 * sid1: Post id from chan.sankakucomplex.com for the left panel.
 * sid2: Post id from chan.sankakucomplex.com for the right panel.
 
+# Userscript
+
+[This userscript](https://jklgit.github.io/Image-Comparison-in-Browser/Sankakucomplex_Compare_Images_Github.user.js) adds links on the post/show/ page and the post/delete/ page on chan.sankakucomplex.com from where you can easily compare child and parent posts.
+
 # Presettings for drag&drop support
 
 Following parameters need to be allowed for jklgit.github.io on the server side for full drag&drop support from a different browser window:
