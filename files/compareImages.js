@@ -595,7 +595,7 @@ function getSankakuPost(id, onComplete, onError) {
 				post.details = 'Post #' + post.id + '<br>' +
 					clean(div_temp.find('#stats').text() +
 						'Filetype: ' + post.type + '<br>' +
-						'Filesize: ' + post.bytes + ' Bytes');
+						'Filesize: ' + post.bytes);
 
 				if (onComplete) {
 					onComplete(post);
