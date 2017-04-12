@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        Sankakucomplex Compare Images Github
-// @namespace   jkl
+// @namespace   https://github.com/jklgit/
 // @description Compare images on github
 // @include     https://chan.sankakucomplex.com/post/show/*
 // @include     https://chan.sankakucomplex.com/post/delete/*
