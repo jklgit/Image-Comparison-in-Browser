@@ -15,6 +15,8 @@ It is also possible to use arguments in the link to directly load a URL after th
 * sid1: Post id from chan.sankakucomplex.com for the left panel.
 * sid2: Post id from chan.sankakucomplex.com for the right panel.
 
+You can use an offline version by saving the page on your desktop before loading any images.
+
 # Userscript
 
 [This userscript](https://jklgit.github.io/Image-Comparison-in-Browser/Sankakucomplex_Compare_Images_Github.user.js) adds links on the post/show/ page and the post/delete/ page on chan.sankakucomplex.com from where you can easily compare child and parent posts.
@@ -27,7 +29,7 @@ Following parameters need to be allowed for jklgit.github.io on the server side 
 * "Access-Control-Expose-Headers" needs to have "Content-Length" in the http response header (for reading out filesize).
 * "Referer" needs to be allowed in the http request header (for reading out image and filesize).
 
-# Installation
+# Installation on a server
 
 Create a new folder and copy index.html and the files folder in there.
 
