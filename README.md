@@ -27,6 +27,10 @@ Following parameters need to be allowed for jklgit.github.io on the server side 
 * "Access-Control-Expose-Headers" needs to have "Content-Length" in the http response header (for reading out filesize).
 * "Referer" needs to be allowed in the http request header (for reading out image and filesize).
 
+# Installation
+
+Create a new folder and copy index.html and the files folder in there.
+
 # Credits
 
 This program utilizes:
