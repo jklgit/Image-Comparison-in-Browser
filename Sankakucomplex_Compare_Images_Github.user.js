@@ -25,11 +25,18 @@ if(thumbs.length === 2){
 // Add link to post/show/ page
 var pool = document.getElementById('add-to-pool');
 if(pool){
+	// Compare with parent post if it exists
+	var parentArg = '';
+	var parent = document.querySelector('#parent-preview > .thumb');
+	if(parent){
+		parentArg = '&sid2=' + parent.getAttribute('id').substr(1);
+	}
+	
 	var a = document.createElement('a');
 	a.innerHTML = 'Compare post content';
 	a.target = '_blank';
 	a.href = 'https://jklgit.github.io/Image-Comparison-in-Browser/index.html\
-		?url1=' + encodeURIComponent(document.location.href);
+		?url1=' + encodeURIComponent(document.location.href) + parentArg;
 	
 	var li = document.createElement('li');
 	li.innerHTML = a.outerHTML;
