@@ -663,6 +663,7 @@ function downloadImageFromUrl(url, div, image, post) {
 		case 'jpeg':
 		case 'png':
 		case 'gif':
+		case 'bmp':
 			img = new Image();
 			img.onload = onLoadFunction;
 			break;
@@ -810,6 +811,7 @@ function handleFile(div, image) {
 	case 'image/jpeg':
 	case 'image/png':
 	case 'image/gif':
+	case 'image/bmp':
 		image.dom = new Image();
 		break;
 
