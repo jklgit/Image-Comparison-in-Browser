@@ -498,6 +498,7 @@ function dragDropDiv(div, image) {
 	})
 	.bind("drop", function (event) {
 		var file = event.originalEvent.dataTransfer.files[0];
+		console.log(event);
 		if (file) {
 			if (file.size > 100 * 1024 * 1024) {
 				div.find('.center').html('File too big! Drop another one.');
@@ -853,6 +854,21 @@ function handleFile(div, image) {
 							image.dataUrl = dataUrl;
 							compareImages();
 						});
+						
+						// Metadata from PNG
+						if(image.file.type === 'image/png'){
+							// Textinformation
+							var metadata = readPNGMetadataFromDataUrl(image.dom.src);
+							text = object2html(metadata.text);
+							if(text !== ''){
+								div.append(jQuery('<div class="exif">' + text + '</div>'));
+							}
+							// Additional details
+							delete metadata.details.width;
+							delete metadata.details.height;
+							details = jQuery(div).find('.details');
+							details.html(details.html() + '<br>' + object2html(metadata.details));
+						}
 					}
 				};
 			} else {
@@ -1096,6 +1112,163 @@ function parseUrl(link) {
 	}
 
 	return url;
+}
+
+function readPNGMetadataFromDataUrl(dataUrl) {
+
+	var metadata = {};
+	metadata.details = {};
+	metadata.text = {};
+	
+	// Convert dataUrl to a binary array
+	dataUrl = dataUrl.substr('data:image/png;base64,'.length);
+	var binary = atob(dataUrl);
+	var len = binary.length;
+	
+	// Chunk header info
+	var n_chunkLength;
+	var s_chunkType;
+	var n_chunkCRC;
+	
+	// For all bytes (skip first 8 which are PNG signature)
+	for (var i = 8; i < len; i++) {
+		
+		// Chunk header and trailer
+		n_chunkLength = binaryToInt(i, 4);
+		s_chunkType = binaryToChunkname(i + 4, 4);
+		n_chunkCRC = binaryToInt(i + n_chunkLength + 8, 4);
+		if(s_chunkType !== 'IDAT'){
+			console.log(n_chunkLength, s_chunkType, n_chunkCRC);
+		}
+		
+		// Jump to chunk data
+		i += 8;
+		
+		// Handle chunk data
+		switch(s_chunkType){
+			// Handle PNG header
+			case 'IHDR':
+				metadata.details.width = binaryToInt(i, 4);
+				metadata.details.height = binaryToInt(i + 4, 4);
+				metadata.details.bitdepth = binaryToInt(i + 8, 1);
+				metadata.details.color_type = binaryToInt(i + 9, 1);
+				metadata.details.compression_method = binaryToInt(i + 10, 1);
+				metadata.details.filter_method = binaryToInt(i + 11, 1);
+				metadata.details.interlace_method = binaryToInt(i + 12, 1);
+				
+				// Make the IHDR humanly readable
+				metadata.details.bitdepth = metadata.details.bitdepth + ' bits/sample'
+				switch(metadata.details.color_type){
+					case 0:
+						metadata.details.color_type = 'none';
+						break;
+					case 2:
+						metadata.details.color_type = 'color';
+						break;
+					case 3:
+						metadata.details.color_type = 'color/palette';
+						break;
+					case 4:
+						metadata.details.color_type = 'alpha';
+						break;
+					case 6:
+						metadata.details.color_type = 'color/alpha';
+						break;
+				}
+				switch(metadata.details.interlace_method){
+					case 0:
+						metadata.details.interlace_method = 'no interlace';
+						break;
+					case 1:
+						metadata.details.interlace_method = 'Adam7 interlace';
+						break;
+				}
+				break;
+			
+			// Handle text information
+			case 'tEXt':
+				array_text = binaryToString(i, n_chunkLength).split('\0');
+				metadata.text[array_text[0]] = array_text[1];
+				break;
+			case 'zTXt':
+				array_text = binaryToString(i, n_chunkLength).split('\0');
+				metadata.text[array_text[0]] = 'compressed ' + n_chunkLength + ' byte text';
+				break;
+			case 'iTXt':
+				array_text = binaryToString(i, n_chunkLength).split('\0');
+				metadata.text[array_text[0]] = 'icompressed ' + n_chunkLength + ' byte text';
+				break;
+			
+			// Handle miscellaneous information
+			
+			// Handle physical pixel dimension
+			case 'pHYs':
+				metadata.text.pixels_per_unit_X = binaryToInt(i, 4);
+				metadata.text.pixels_per_unit_Y = binaryToInt(i + 4, 4);
+				metadata.text.unit = binaryToInt(i + 5, 1);
+				switch(metadata.text.unit){
+					case 0:
+						metadata.text.unit = 'unknown';
+						break;
+					case 0:
+						metadata.text.unit = 'meter';
+						break;
+				}
+				break;
+		}
+		
+		// Jump to next chunk
+		i += n_chunkLength + 4 - 1;
+	}
+
+	return metadata;
+
+	function binaryToInt(i, len) {
+		var n_0 = 0;
+		if (i !== undefined) {
+			n_0 = i;
+		}
+		if (len === undefined){
+			len = 4;
+		}
+		var n_e = n_0 + len;
+		var value = 0;
+		for (var i = n_e - 1; i >= n_0; i--) {
+			// console.log(i, value, binary.charCodeAt(i), n_e - i -1);
+			value += binary.charCodeAt(i)*Math.pow(256, n_e - i -1);
+		}
+
+		return value;
+	}
+	
+	function binaryToChunkname(i){
+		return binary[i] + binary[i+1] + binary[i+2] + binary[i+3];
+	}
+	
+	function binaryToString(i, len){
+		if(len === undefined){
+			len = 4;
+		}
+		len += i;
+		console.log(i, len);
+		var s_value = '';
+		for(var j = i; j < len; j++){
+			s_value += binary[j];
+			// console.log(j, s_value, binary[j]);
+		}
+		return s_value;
+	}
+}
+
+function object2html(obj){
+	var s = '';
+	for(var key in obj){
+		s += key + ': ' + obj[key] + '<br>';
+	}
+	if(s !== ''){
+		s = s.substr(0, s.length - '<br>'.length);
+	}
+	return s;
 }
 
 //})();
