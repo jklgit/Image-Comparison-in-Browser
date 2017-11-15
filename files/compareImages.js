@@ -1119,6 +1119,7 @@ function readPNGMetadataFromDataUrl(dataUrl) {
 	var metadata = {};
 	metadata.details = {};
 	metadata.text = {};
+	metadata.details.data_size = 0;
 	
 	// Convert dataUrl to a binary array
 	dataUrl = dataUrl.substr('data:image/png;base64,'.length);
@@ -1184,6 +1185,14 @@ function readPNGMetadataFromDataUrl(dataUrl) {
 						break;
 				}
 				break;
+			case 'PLTE':
+				metadata.text.chunk_PLTE = n_chunkLength + ' byte';
+				break;
+				
+			// Handle data
+			case 'IDAT':
+				metadata.details.data_size += n_chunkLength;
+				break;
 			
 			// Handle text information
 			case 'tEXt':
@@ -1201,6 +1210,30 @@ function readPNGMetadataFromDataUrl(dataUrl) {
 			
 			// Handle miscellaneous information
 			
+			case 'cHRM':
+				metadata.text.chunk_cHRM = n_chunkLength + ' byte';
+				break;
+			case 'gAMA':
+				metadata.text.chunk_gAMA = n_chunkLength + ' byte';
+				break;
+			case 'iCCP':
+				metadata.text.chunk_iCCP = n_chunkLength + ' byte';
+				break;
+			case 'sBIT':
+				metadata.text.chunk_sBIT = n_chunkLength + ' byte';
+				break;
+			case 'sRGB':
+				metadata.text.chunk_sRGB = n_chunkLength + ' byte';
+				break;
+			case 'bKGD':
+				metadata.text.chunk_bKGD = n_chunkLength + ' byte';
+				break;
+			case 'hIST':
+				metadata.text.chunk_hIST = n_chunkLength + ' byte';
+				break;
+			case 'tRNS':
+				metadata.text.chunk_tRNS = n_chunkLength + ' byte';
+				break;
 			// Handle physical pixel dimension
 			case 'pHYs':
 				metadata.text.pixels_per_unit_X = binaryToInt(i, 4);
@@ -1215,12 +1248,20 @@ function readPNGMetadataFromDataUrl(dataUrl) {
 						break;
 				}
 				break;
+			case 'sPLT':
+				metadata.text.chunk_sPLT = n_chunkLength + ' byte';
+				break;
+			case 'tIME':
+				metadata.text.chunk_tIME = n_chunkLength + ' byte';
+				break;
 		}
 		
 		// Jump to next chunk
 		i += n_chunkLength + 4 - 1;
 	}
-
+	
+	metadata.details.data_size += ' byte';
+	
 	return metadata;
 
 	function binaryToInt(i, len) {
