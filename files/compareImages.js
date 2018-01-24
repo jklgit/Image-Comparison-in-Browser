@@ -18,6 +18,7 @@ var resembleConfig = null;
 var play = true;
 var displayDetails = true;
 var displayExif = true;
+var displayPixelated = true;
 
 var temp;
 
@@ -43,6 +44,20 @@ var temp;
 			jQuery('.exif').show();
 		} else {
 			jQuery('.exif').hide();
+		}
+	});
+	displayPixelated = jQuery('#pixelated').is(':checked');
+	var pixelatedStyle = 'image-rendering:crisp-edges; image-rendering:-moz-crisp-edges; image-rendering:pixelated; image-rendering: -o-crisp-edges; -ms-interpolation-mode: nearest-neighbor';
+	if(displayPixelated){
+		jQuery('#content').attr('style', pixelatedStyle);
+	}
+	jQuery('#content').css({'image-rendering': 'crisp-edges'});
+	jQuery('#pixelated').parent().bind('click', function () {
+		displayPixelated = this.childNodes[0].checked;
+		if (displayPixelated) {
+			jQuery('#content').attr('style', pixelatedStyle);
+		} else {
+			jQuery('#content').attr('style', '');
 		}
 	});
 
