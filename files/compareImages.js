@@ -19,6 +19,7 @@ var play = true;
 var displayDetails = true;
 var displayExif = true;
 var displayPixelated = true;
+var displayRightPanel = false;
 
 var temp;
 
@@ -60,6 +61,20 @@ var temp;
 			jQuery('#content').attr('style', '');
 		}
 	});
+
+	// Right panel button listener
+	displayRightPanel = jQuery('#rightPanel').is(':checked');
+	jQuery('#rightPanel').parent().bind('click', function () {
+		displayRightPanel = this.childNodes[0].checked;
+
+		// Trigger functions to display right based on state.
+		displayRight(displayRightPanel);
+		if (displayRightPanel) {
+			// Rerun compareImages to correct zoom behavior when hiding the right panel.
+			compareImages();
+		}
+	});
+
 
 	// Play/Pause button listener
 	jQuery('#play').bind('click', function () {
