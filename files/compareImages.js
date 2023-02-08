@@ -69,6 +69,7 @@ var temp;
 
 		// Trigger functions to display right based on state.
 		displayRight(displayRightPanel);
+		jQuery('#rightPanel').prop('checked', displayRightPanel);
 		if (displayRightPanel) {
 			// Rerun compareImages to correct zoom behavior when hiding the right panel.
 			compareImages();
